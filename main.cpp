@@ -9,54 +9,31 @@
 #include "xlsxmerger.h"
 
 
-/* TEST MAIN 3: CSV files --> XLSX files */
 
-// FUNCTION DECLARATIONS:
+
+// FUNCTION DECLARATIONS //
 QStringList getFilesOfType(const QString &folderPath, const QString &extension);
 QStringList getFullFilePathsOfType(const QString &folderPath, const QString &extension);
+void complete_actions(); // build-out for TEST 3
+// ------------------------------------------------------------------------------
 
 
+
+/* TEST MAIN 3: CSV files --> XLSX files */
 int main()
 {
-    XlsxMerger merger;
-
-    QString inputFolder = "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/myCSVstuff";
-    QString outputFolder = "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/myXLSXstuff";
-
-    // STEP 1: turn csv files into excel files
-    merger.convertCsvListToXlsx(inputFolder, outputFolder); // puts all of the excel files into an output folder
-    // STEP 2: find the list of filepath names in the output folder
-    QStringList xlsxFiles = getFullFilePathsOfType(outputFolder, "xlsx");
-
-    // STEP 3: create a single excel output from the input excels
-   QString outputFile = "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/finaloutput.xlsx";
-
-    if (!merger.mergeFiles(xlsxFiles, outputFile)) {
-        qWarning() << "Failed to merge XLSX files.";
-    }
-
-
+    complete_actions();
     return 0;
 }
 
 
 
-// SOME FUNCITONS
+// ------------------------------------------------------------------------------
+// SOME FUNCITONS (Alternative tests are stored below functions)
 
-QStringList getFilesOfType(const QString &folderPath, const QString &extension)
-{
-    QDir dir(folderPath);
-    if (!dir.exists()) {
-        qWarning() << "Directory does not exist:" << folderPath;
-        return {};
-    }
 
-    QStringList filters;
-    filters << "*." + extension;  // e.g., "*.csv"
 
-    return dir.entryList(filters, QDir::Files);
-}
-
+// function grabs all of a certain file type from a folder
 QStringList getFullFilePathsOfType(const QString &folderPath, const QString &extension)
 {
     QDir dir(folderPath);
@@ -76,7 +53,23 @@ QStringList getFullFilePathsOfType(const QString &folderPath, const QString &ext
     return fullPaths;
 }
 
+// Innards for Test #3
+void complete_actions(){
 
+    conversions conv;
+
+    // BUILD TEST QStringList for inputting .csv files:
+    QStringList inputFiles ={ "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/myCSVstuff/input1.csv",
+                              "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/myCSVstuff/input2.csv",
+                              "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/myCSVstuff/input3.csv",
+                            };
+
+
+    QString outputFile = "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/final_output.xlsx";
+
+    conv.CSV_directTransfer_XLSX_polished(inputFiles, outputFile);
+
+}
 
 /* TEST MAIN 2: XLSX COMBINER */
 

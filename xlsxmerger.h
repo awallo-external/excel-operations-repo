@@ -10,7 +10,7 @@ public:
     XlsxMerger();
 
     bool mergeFiles(const QStringList &inputPaths, const QString &outputPath);
-    bool convertCsvListToXlsx(const QString &inputFolder, const QString &outputFolder);
+    bool convertCsvListToXlsx(const QStringList &csvFilePaths, const QString &outputFolder);
 };
 
 #endif // XLSXMERGER_H

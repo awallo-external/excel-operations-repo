@@ -49,15 +49,9 @@ bool XlsxMerger::mergeFiles(const QStringList &inputPaths, const QString &output
     return outputDoc.saveAs(outputPath);
 }
 
-bool XlsxMerger::convertCsvListToXlsx(const QString &inputFolder, const QString &outputFolder)
+bool XlsxMerger::convertCsvListToXlsx(const QStringList &csvFilePaths, const QString &outputFolder)
 {
     conversions conv;
-
-    QDir inputDir(inputFolder);
-    if (!inputDir.exists()) {
-        qWarning() << "Input folder does not exist:" << inputFolder;
-        return false;
-    }
 
     QDir outDir(outputFolder);
     if (!outDir.exists()) {
@@ -65,24 +59,29 @@ bool XlsxMerger::convertCsvListToXlsx(const QString &inputFolder, const QString 
         return false;
     }
 
-    QStringList csvFiles = inputDir.entryList(QStringList() << "*.csv", QDir::Files);
-    if (csvFiles.isEmpty()) {
-        qWarning() << "No CSV files found in input folder:" << inputFolder;
+    if (csvFilePaths.isEmpty()) {
+        qWarning() << "CSV file list is empty.";
         return false;
     }
 
     bool success = true;
 
-    for (const QString &fileName : csvFiles) {
-        QString fullCsvPath = inputDir.filePath(fileName);
-        QString baseName = QFileInfo(fileName).completeBaseName();
+    for (const QString &csvPath : csvFilePaths) {
+        QFileInfo info(csvPath);
+        if (!info.exists() || !info.isFile() || info.suffix().toLower() != "csv") {
+            qWarning() << "Skipping invalid CSV file:" << csvPath;
+            continue;
+        }
+
+        QString baseName = info.completeBaseName();
         QString xlsxPath = outDir.filePath(baseName + ".xlsx");
 
-        if (!conv.CSV_2_XLSX(fullCsvPath, xlsxPath)) {
-            qWarning() << "Failed to convert:" << fullCsvPath;
+        if (!conv.CSV_2_XLSX(csvPath, xlsxPath)) {
+            qWarning() << "Failed to convert:" << csvPath;
             success = false;
         }
     }
 
     return success;
 }
+

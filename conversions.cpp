@@ -30,11 +30,96 @@ Andrew Wallo V
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
+#include <QFileInfo>
+
 
 using namespace QXlsx;
 
 conversions::conversions()
 {
+}
+
+bool conversions::CSV_directTransfer_XLSX_polished(const QStringList &csvPaths, const QString &outputPath)
+{
+    if (csvPaths.isEmpty()) {
+        qWarning() << "No CSV files provided.";
+        return false;
+    }
+
+    QXlsx::Document finalDoc;
+
+    for (const QString &csvPath : csvPaths)
+    {
+        QFile file(csvPath);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qWarning() << "Failed to open CSV file:" << csvPath;
+            return false;
+        }
+
+        QTextStream in(&file);
+        QString sheetName = QFileInfo(csvPath).baseName();
+        finalDoc.addSheet(sheetName);
+        Worksheet *sheet = dynamic_cast<Worksheet*>(finalDoc.sheet(sheetName));
+
+        if (!sheet) {
+            qWarning() << "Failed to create/access sheet:" << sheetName;
+            return false;
+        }
+
+        int row = 1;
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            QStringList values = line.split(',');
+
+            for (int col = 0; col < values.size(); ++col) {
+                sheet->write(row, col + 1, values.at(col));
+            }
+
+            ++row;
+        }
+
+        // Apply formatting
+        auto dim = sheet->dimension();
+        int firstCol = dim.firstColumn();
+        int lastCol  = dim.lastColumn();
+
+        // 1. Freeze top row
+        sheet->setFreezeTopRow(true);
+
+        // 2. Add filter
+        sheet->setAutoFilter(QXlsx::CellRange(1, 1, 1, lastCol));
+
+        // 3. Header styling
+        Format headerFormat;
+        headerFormat.setPatternBackgroundColor(QColor("#D3D3D3"));
+        headerFormat.setFontBold(true);
+
+        for (int col = firstCol; col <= lastCol; ++col) {
+            QVariant val = sheet->read(1, col);
+            sheet->write(1, col, val, headerFormat);
+        }
+
+        // 4. Adjust width per column
+        constexpr double minWidth = 8.43;
+        for (int col = firstCol; col <= lastCol; ++col) {
+            int maxLen = 0;
+            for (int r = 1; r <= dim.lastRow(); ++r) {
+                QString str = sheet->read(r, col).toString();
+                maxLen = qMax(maxLen, str.length());
+            }
+
+            double width = qMax(maxLen * 1.05 + 0.4, minWidth);
+            sheet->setColumnWidth(QXlsx::CellRange(1, col, dim.lastRow(), col), width);
+        }
+    }
+
+    // Save merged workbook to output path
+    if (!finalDoc.saveAs(outputPath)) {
+        qWarning() << "Failed to save merged XLSX to:" << outputPath;
+        return false;
+    }
+
+    return true;
 }
 
 // Converts a Comma Separated File (CSV) into a zipped folder set of XML files (Excel file format)
