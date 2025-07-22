@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
         qCritical() << "CSV → XLSX conversion failed";
         return 1;
     }
-    if (!conv.XLSX_addFilter(xlsxPath)) {
+    if (!conv.XLSX_addUtils(xlsxPath)) {
         qCritical() << "Adding AutoFilter failed";
         return 1;
     }

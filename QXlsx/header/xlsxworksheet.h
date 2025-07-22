@@ -191,11 +191,15 @@ public:
     // NEW: set auto-filter on a given range
     void setAutoFilter(const CellRange &range);
 
+    // NEW: Freeze the top row (so row 1 stays visible when you scroll)
+    void setFreezeTopRow(bool on);
+
 private:
     void saveToXmlFile(QIODevice *device) const override;
     bool loadFromXmlFile(QIODevice *device) override;
 
     // NEW: store filter range
+    bool      m_freezeTopRow = false; // initial state
     CellRange m_autoFilterRange;
 };
 

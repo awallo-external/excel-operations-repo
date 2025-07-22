@@ -53,6 +53,11 @@ void Worksheet::setAutoFilter(const CellRange &range)
     m_autoFilterRange = range;
 }
 
+void Worksheet::setFreezeTopRow(bool on)
+{
+    m_freezeTopRow = on;
+}
+
 WorksheetPrivate::WorksheetPrivate(Worksheet *p, Worksheet::CreateFlag flag)
     : AbstractSheetPrivate(p, flag)
     , windowProtection(false)
@@ -1329,6 +1334,26 @@ void Worksheet::saveToXmlFile(QIODevice *device) const
     if (!d->showWhiteSpace)
         writer.writeAttribute(QStringLiteral("showWhiteSpace"), QStringLiteral("0"));
     writer.writeAttribute(QStringLiteral("workbookViewId"), QStringLiteral("0"));
+
+    // NEW: freeze the top row if requested
+
+    // --- FREEZE TOP ROW SNIPPET START ---
+    if (m_freezeTopRow) {
+        writer.writeStartElement(QStringLiteral("pane"));
+        writer.writeAttribute(QStringLiteral("xSplit"),      QStringLiteral("0"));
+        writer.writeAttribute(QStringLiteral("ySplit"),      QStringLiteral("1"));
+        writer.writeAttribute(QStringLiteral("topLeftCell"), QStringLiteral("A2"));
+        writer.writeAttribute(QStringLiteral("activePane"),  QStringLiteral("bottomLeft"));
+        writer.writeAttribute(QStringLiteral("state"),       QStringLiteral("frozen")); // adds the frozen state attribute
+        writer.writeEndElement(); // pane
+
+        writer.writeStartElement(QStringLiteral("selection"));
+        writer.writeAttribute(QStringLiteral("pane"), QStringLiteral("bottomLeft"));
+        writer.writeEndElement(); // selection
+    }
+    // --- FREEZE TOP ROW SNIPPET END ---
+
+    // END NEW INSERT
     writer.writeEndElement(); // sheetView
     writer.writeEndElement(); // sheetViews
 
@@ -1386,6 +1411,7 @@ void Worksheet::saveToXmlFile(QIODevice *device) const
                               m_autoFilterRange.toString());
         writer.writeEndElement(); // autoFilter
     }
+
 
     d->saveXmlMergeCells(writer);
     for (const ConditionalFormatting &cf : d->conditionalFormattingList)
