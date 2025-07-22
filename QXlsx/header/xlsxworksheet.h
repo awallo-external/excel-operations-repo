@@ -1,4 +1,6 @@
-// xlsxworksheet.h
+/*
+ * Patch for QXlsx to add setAutoFilter functionality in Worksheet
+ */
 
 #ifndef XLSXWORKSHEET_H
 #define XLSXWORKSHEET_H
@@ -101,14 +103,12 @@ public:
                        const Format &format = Format());
     bool writeDateTime(int row, int column, const QDateTime &dt, const Format &format = Format());
 
-    // dev67
     bool writeDate(const CellReference &row_column,
                    const QDate &dt,
                    const Format &format = Format());
     bool writeDate(int row, int column, const QDate &dt, const Format &format = Format());
 
-    bool
-        writeTime(const CellReference &row_column, const QTime &t, const Format &format = Format());
+    bool writeTime(const CellReference &row_column, const QTime &t, const Format &format = Format());
     bool writeTime(int row, int column, const QTime &t, const Format &format = Format());
 
     bool writeHyperlink(const CellReference &row_column,
@@ -184,13 +184,19 @@ public:
     void setOutlineSymbolsVisible(bool visible);
     bool isWhiteSpaceVisible() const;
     void setWhiteSpaceVisible(bool visible);
-    bool setStartPage(int spagen); // add by liufeijin20181028
+    bool setStartPage(int spagen);
 
     QVector<CellLocation> getFullCells(int *maxRow, int *maxCol) const;
+
+    // NEW: set auto-filter on a given range
+    void setAutoFilter(const CellRange &range);
 
 private:
     void saveToXmlFile(QIODevice *device) const override;
     bool loadFromXmlFile(QIODevice *device) override;
+
+    // NEW: store filter range
+    CellRange m_autoFilterRange;
 };
 
 QT_END_NAMESPACE_XLSX

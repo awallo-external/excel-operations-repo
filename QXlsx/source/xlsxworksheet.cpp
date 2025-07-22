@@ -48,6 +48,11 @@ const int XLSX_COLUMN_MAX = 16384;
 const int XLSX_STRING_MAX = 32767;
 } // namespace
 
+void Worksheet::setAutoFilter(const CellRange &range)
+{
+    m_autoFilterRange = range;
+}
+
 WorksheetPrivate::WorksheetPrivate(Worksheet *p, Worksheet::CreateFlag flag)
     : AbstractSheetPrivate(p, flag)
     , windowProtection(false)
@@ -1373,6 +1378,14 @@ void Worksheet::saveToXmlFile(QIODevice *device) const
     if (d->dimension.isValid())
         d->saveXmlSheetData(writer);
     writer.writeEndElement(); // sheetData
+
+    // NEW: insert autoFilter if set
+    if (m_autoFilterRange.isValid()) {
+        writer.writeStartElement(QStringLiteral("autoFilter"));
+        writer.writeAttribute(QStringLiteral("ref"),
+                              m_autoFilterRange.toString());
+        writer.writeEndElement(); // autoFilter
+    }
 
     d->saveXmlMergeCells(writer);
     for (const ConditionalFormatting &cf : d->conditionalFormattingList)

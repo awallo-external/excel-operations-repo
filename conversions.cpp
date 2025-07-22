@@ -46,6 +46,45 @@ bool conversions::CSV_2_XLSX(const QString &csvPath, const QString &xlsxPath)
     return true;
 }
 
+
+bool conversions::XLSX_addFilter(const QString &xlsxPath)
+{
+    // 1) Load the workbook from disk
+    Document xlsx(xlsxPath);
+    if (!xlsx.load()) {
+        qWarning() << "Failed to open XLSX for editing:" << xlsxPath;
+        return false;
+    }
+
+    // 2) Grab the first worksheet
+    Worksheet *sheet = dynamic_cast<Worksheet*>(xlsx.currentWorksheet());
+    if (!sheet) {
+        qWarning() << "No worksheet available in" << xlsxPath;
+        return false;
+    }
+
+    // 3) Determine how many columns your header row spans
+    //    Here we take the sheet's used dimension
+    auto dim = sheet->dimension();
+    int lastCol = dim.lastColumn();
+    if (lastCol < 1) {
+        qWarning() << "Worksheet appears empty, nothing to filter.";
+        return false;
+    }
+
+    // 4) Set the AutoFilter on row 1, from col 1 ("A1") to col lastCol
+    sheet->setAutoFilter(CellRange(1, 1, 1, lastCol));
+
+    // 5) Save changes back to disk
+    if (!xlsx.saveAs(xlsxPath)) {
+        qWarning() << "Failed to save XLSX after adding filter.";
+        return false;
+    }
+
+    return true;
+}
+
+/*
 bool conversions::XLSX_addFilter(const QString &xlsxPath)
 {
     Document xlsx(xlsxPath);
@@ -65,5 +104,23 @@ bool conversions::XLSX_addFilter(const QString &xlsxPath)
             break;
     }
 
+    if (colCount == 0)
+    {
+        qWarning() << "No header row found to apply filter.";
+        return false;
+    }
+
+    // Apply filter to first row
+    CellRange filterRange(1,1,1, colCount);
+    sheet->setAutoFilter(filterRange);
+
+    if (!xlsx.save())
+    {
+        qWarning() << "Failed to save XLSX file after adding filter.";
+        return false;
+    }
+
     return true;
 }
+
+*/
