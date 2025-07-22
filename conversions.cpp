@@ -1,6 +1,32 @@
+/* conversions.cpp
+
+  - HOW TO CALL FUNCTIONS
+
+1. include the conversions.h library
+2. create an instance of the conversions class
+3. call member functions of your instance:
+
+
+conversions conv; // (step 2)
+
+conv.CSV_2_XLSX(csvPath, xlsxPath); // (step 3)
+
+A note for the not-quite late Mr. Jim:
+
+Using other people's code is ok...
+... maybe just pretend that QXlsx is part of Qt,
+and also pretend that I didn't change anything in QXlsx to allow for
+my fuctions to work? Maybe?
+
+The ever hopeful,
+
+
+Andrew Wallo V
+
+*/
+
 #include "conversions.h"
 #include "xlsxdocument.h"
-
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
@@ -46,8 +72,9 @@ bool conversions::CSV_2_XLSX(const QString &csvPath, const QString &xlsxPath)
     return true;
 }
 
-
-bool conversions::XLSX_addUtils(const QString &xlsxPath) // ALSO HANDLES FREEZE PANE
+// CONTROLS BOLD/BACKGROUND COLOR/FREEZEPANE ACTIVATION/FILTER ACTIVATION
+//
+bool conversions::XLSX_addUtils(const QString &xlsxPath)
 {
     // 1) Load the workbook from disk
     Document xlsx(xlsxPath);
@@ -94,20 +121,6 @@ bool conversions::XLSX_addUtils(const QString &xlsxPath) // ALSO HANDLES FREEZE 
         sheet->write(firstRow, col, val, headerFormat);
     }
 
-    for (int col = dim.firstColumn(); col <= dim.lastColumn(); ++col) {
-        int maxLen = 0;
-        for (int row = dim.firstRow(); row <= dim.lastRow(); ++row) {
-            QString str = sheet->read(row, col).toString();
-            maxLen = qMax(maxLen, str.length());
-        }
-
-        // Tighter approximation to avoid oversizing
-        double adjustedWidth = maxLen * 1.05 + 0.4; // SET PADDING DOUBLES to 1.2 and 1.0 for wider approximation
-
-        // Corrected: apply column width for just this column
-        sheet->setColumnWidth(CellRange(1, col, dim.lastRow(), col), adjustedWidth);
-    }
-
     // 5) Save changes back to disk
     if (!xlsx.saveAs(xlsxPath)) {
         qWarning() << "Failed to save XLSX after adding filter.";
@@ -116,4 +129,63 @@ bool conversions::XLSX_addUtils(const QString &xlsxPath) // ALSO HANDLES FREEZE 
 
     return true;
 }
+bool conversions::XLSX_fixWidth(const QString &xlsxPath, bool isDataWidth)
+{
+    // 1) Load the workbook
+    Document xlsx(xlsxPath);
+    if (!xlsx.load()) {
+        qWarning() << "Failed to open XLSX for resizing:" << xlsxPath;
+        return false;
+    }
 
+    // 2) Get worksheet
+    Worksheet *sheet = dynamic_cast<Worksheet*>(xlsx.currentWorksheet());
+    if (!sheet) {
+        qWarning() << "No worksheet available in" << xlsxPath;
+        return false;
+    }
+
+    // 3) Determine data range
+    auto dim = sheet->dimension();
+    if (!dim.isValid()) {
+        qWarning() << "No valid data range found.";
+        return false;
+    }
+
+    int firstRow = dim.firstRow();
+    int lastRow  = dim.lastRow();
+    int firstCol = dim.firstColumn();
+    int lastCol  = dim.lastColumn();
+
+    constexpr double minWidth = 8.43;
+
+    // 4) Loop through columns and find max string length
+    for (int col = firstCol; col <= lastCol; ++col) {
+        int maxLen = 0;
+
+        // Skip header row if isDataWidth is true
+        int startRow = isDataWidth ? (firstRow + 1) : firstRow;
+
+        for (int row = startRow; row <= lastRow; ++row) {
+            QString str = sheet->read(row, col).toString();
+            maxLen = qMax(maxLen, str.length());
+        }
+
+        // Width tuning — adjust as needed
+        double adjustedWidth = maxLen * 1.05 + 0.4;
+
+        // Enforce minimum width to avoid shrinking default Excel width
+        adjustedWidth = qMax(adjustedWidth, minWidth);
+
+        // Apply width to the full range of that column
+        sheet->setColumnWidth(CellRange(firstRow, col, lastRow, col), adjustedWidth);
+    }
+
+    // 5) Save changes
+    if (!xlsx.saveAs(xlsxPath)) {
+        qWarning() << "Failed to save adjusted width XLSX:" << xlsxPath;
+        return false;
+    }
+
+    return true;
+}

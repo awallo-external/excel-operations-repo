@@ -16,7 +16,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         conversions.cpp \
-        main.cpp
+        main.cpp \
+        xlsxmerger.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -27,4 +28,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 include(QXlsx/QXlsx.pri)
 
 HEADERS += \
-    conversions.h
+    conversions.h \
+    xlsxmerger.h
