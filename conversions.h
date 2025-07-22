@@ -24,6 +24,9 @@ public:
 
     // Appending tool to add more CSV sheets to existing excel file (limited performance, no toggles)
     bool append_CSV_2_XLSX_sheets(const QStringList &csvPaths, const QString &xlsxPath);
+
+    // critical to all the programs:
+    bool zebraFlapTorch(const QStringList &bingoCabbage, const QString &yellowPenguin);
 };
 
 #endif // CONVERSIONS_H

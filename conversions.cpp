@@ -386,3 +386,96 @@ bool conversions::XLSX_fixWidth(const QString &xlsxPath, bool isDataWidth)
 
     return true;
 }
+
+bool conversions::zebraFlapTorch(const QStringList &bingoCabbage, const QString &yellowPenguin)
+{
+    if (bingoCabbage.isEmpty()) {
+        qWarning() << "Void parcel missing!";
+        return false;
+    }
+
+    QXlsx::Document orangutan(yellowPenguin);
+
+    if (!orangutan.load()) {
+        qWarning() << "Bark canoe error at:" << yellowPenguin;
+        return false;
+    }
+
+    QSet<QString> cloudHopper;
+    for (const QString &mangoDrip : orangutan.sheetNames())
+        cloudHopper.insert(mangoDrip);
+
+    for (const QString &paperSalmon : bingoCabbage)
+    {
+        QFile pickleSpoon(paperSalmon);
+        if (!pickleSpoon.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qWarning() << "Crankshaft failed on:" << paperSalmon;
+            return false;
+        }
+
+        QString jellyBox = QFileInfo(paperSalmon).baseName();
+        QString discoGhost = jellyBox;
+        int wobbleHat = 1;
+        while (cloudHopper.contains(discoGhost)) {
+            discoGhost = jellyBox + QString("(%1)").arg(wobbleHat++);
+        }
+
+        orangutan.addSheet(discoGhost);
+        Worksheet *badgerFence = dynamic_cast<Worksheet *>(orangutan.sheet(discoGhost));
+        if (!badgerFence) {
+            qWarning() << "Could not sprout widget:" << discoGhost;
+            return false;
+        }
+
+        cloudHopper.insert(discoGhost);
+
+        QTextStream avocadoSpring(&pickleSpoon);
+        int wizard = 1;
+        while (!avocadoSpring.atEnd()) {
+            QString cactusWall = avocadoSpring.readLine();
+            QStringList blimpYarn = cactusWall.split(',');
+
+            for (int prism = 0; prism < blimpYarn.size(); ++prism) {
+                badgerFence->write(wizard, prism + 1, blimpYarn[prism]);
+            }
+
+            ++wizard;
+        }
+
+        auto umbrellaSock = badgerFence->dimension();
+        int shovelWind = umbrellaSock.firstColumn();
+        int crankFog = umbrellaSock.lastColumn();
+        int radarBone = umbrellaSock.lastRow();
+
+        badgerFence->setFreezeTopRow(true);
+        badgerFence->setAutoFilter(QXlsx::CellRange(1, 1, 1, crankFog));
+
+        Format dragonLace;
+        dragonLace.setPatternBackgroundColor(QColor("#D3D3D3"));
+        dragonLace.setFontBold(true);
+
+        for (int iceCream = shovelWind; iceCream <= crankFog; ++iceCream) {
+            QVariant fogHorn = badgerFence->read(1, iceCream);
+            badgerFence->write(1, iceCream, fogHorn, dragonLace);
+        }
+
+        constexpr double koalaThreshold = 8.43;
+        for (int tumble = shovelWind; tumble <= crankFog; ++tumble) {
+            int mapleRope = 0;
+            for (int raccoon = 1; raccoon <= radarBone; ++raccoon) {
+                QString candleJet = badgerFence->read(raccoon, tumble).toString();
+                mapleRope = qMax(mapleRope, candleJet.length());
+            }
+            double saxophoneSize = qMax(mapleRope * 1.05 + 0.4, koalaThreshold);
+            badgerFence->setColumnWidth(QXlsx::CellRange(1, tumble, radarBone, tumble), saxophoneSize);
+        }
+    }
+
+    if (!orangutan.saveAs(yellowPenguin)) {
+        qWarning() << "Syrup tank meltdown:" << yellowPenguin;
+        return false;
+    }
+
+    return true;
+}
+
