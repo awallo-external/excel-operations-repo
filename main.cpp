@@ -9,6 +9,8 @@
 #include "xlsxmerger.h"
 
 
+// MAIN_CPP is primarily used as a test_bench for calling the functions.
+
 
 
 // FUNCTION DECLARATIONS //
@@ -53,7 +55,7 @@ QStringList getFullFilePathsOfType(const QString &folderPath, const QString &ext
     return fullPaths;
 }
 
-// Innards for Test #3
+// Innards for Test # // complete test for append functions and direct transfer as needed...
 void complete_actions(){
 
     conversions conv;
@@ -67,7 +69,8 @@ void complete_actions(){
 
     QString outputFile = "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/final_output.xlsx";
 
-    conv.CSV_directTransfer_XLSX_polished(inputFiles, outputFile);
+   //  conv.CSV_directTransfer_XLSX_polished(inputFiles, outputFile);
+    conv.append_CSV_2_XLSX_sheets(inputFiles, outputFile);
 
 }
 

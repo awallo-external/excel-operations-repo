@@ -21,6 +21,9 @@ public:
     // Function takes a QStringList of CSV filepaths and creates a single excel file with each CSV on a separate sheet
     // Output Path includes entire path and name of output excel file, must end in .xlsx or bad stuff could happen.
     bool CSV_directTransfer_XLSX_polished(const QStringList &csvPaths, const QString &outputPath);
+
+    // Appending tool to add more CSV sheets to existing excel file (limited performance, no toggles)
+    bool append_CSV_2_XLSX_sheets(const QStringList &csvPaths, const QString &xlsxPath);
 };
 
 #endif // CONVERSIONS_H

@@ -32,6 +32,14 @@ Andrew Wallo V
 #include <QDebug>
 #include <QFileInfo>
 
+// Many functions call similar code
+//
+//
+// Values for width adjustments, data vs. header toggling,
+// and feature activating could be enumerated along with
+// function calls for all features that are changed to be
+// set/run
+// ------------------------------------------------------------
 
 using namespace QXlsx;
 
@@ -121,6 +129,110 @@ bool conversions::CSV_directTransfer_XLSX_polished(const QStringList &csvPaths, 
 
     return true;
 }
+
+// Appending tool:
+bool conversions::append_CSV_2_XLSX_sheets(const QStringList &csvPaths, const QString &xlsxPath)
+{
+    if (csvPaths.isEmpty()) {
+        qWarning() << "No CSV files provided.";
+        return false;
+    }
+
+    QXlsx::Document xlsx(xlsxPath);
+
+    if (!xlsx.load()) {
+        qWarning() << "Failed to load existing XLSX:" << xlsxPath;
+        return false;
+    }
+
+    // Helper: track used sheet names
+    QSet<QString> existingSheets;
+    for (const QString &sheetName : xlsx.sheetNames())
+        existingSheets.insert(sheetName);
+
+    // Append each CSV as a new worksheet
+    for (const QString &csvPath : csvPaths)
+    {
+        QFile file(csvPath);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qWarning() << "Cannot open CSV:" << csvPath;
+            return false;
+        }
+
+        QString baseName = QFileInfo(csvPath).baseName();
+        QString uniqueName = baseName;
+        int counter = 1;
+        while (existingSheets.contains(uniqueName)) {
+            uniqueName = baseName + QString("(%1)").arg(counter++);
+        }
+
+        // Add new sheet with unique name
+        xlsx.addSheet(uniqueName);
+        Worksheet *sheet = dynamic_cast<Worksheet *>(xlsx.sheet(uniqueName));
+        if (!sheet) {
+            qWarning() << "Could not create sheet:" << uniqueName;
+            return false;
+        }
+
+        existingSheets.insert(uniqueName); // Register the new sheet name
+
+        // Write CSV content
+        QTextStream in(&file);
+        int row = 1;
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            QStringList values = line.split(',');
+
+            for (int col = 0; col < values.size(); ++col) {
+                sheet->write(row, col + 1, values[col]);
+            }
+
+            ++row;
+        }
+
+        // Format utilities
+        auto dim = sheet->dimension();
+        int firstCol = dim.firstColumn();
+        int lastCol  = dim.lastColumn();
+        int lastRow  = dim.lastRow();
+
+        // 1. Freeze top row
+        sheet->setFreezeTopRow(true);
+
+        // 2. Add filter
+        sheet->setAutoFilter(QXlsx::CellRange(1, 1, 1, lastCol));
+
+        // 3. Style header
+        Format headerFormat;
+        headerFormat.setPatternBackgroundColor(QColor("#D3D3D3"));
+        headerFormat.setFontBold(true);
+        for (int col = firstCol; col <= lastCol; ++col) {
+            QVariant val = sheet->read(1, col);
+            sheet->write(1, col, val, headerFormat);
+        }
+
+        // 4. Adjust column widths
+        constexpr double minWidth = 8.43;
+        for (int col = firstCol; col <= lastCol; ++col) {
+            int maxLen = 0;
+            for (int r = 1; r <= lastRow; ++r) {
+                QString str = sheet->read(r, col).toString();
+                maxLen = qMax(maxLen, str.length());
+            }
+            double width = qMax(maxLen * 1.05 + 0.4, minWidth);
+            sheet->setColumnWidth(QXlsx::CellRange(1, col, lastRow, col), width);
+        }
+    }
+
+    // Save to same file path
+    if (!xlsx.saveAs(xlsxPath)) {
+        qWarning() << "Failed to save updated XLSX:" << xlsxPath;
+        return false;
+    }
+
+    return true;
+}
+
 
 // Converts a Comma Separated File (CSV) into a zipped folder set of XML files (Excel file format)
 //
