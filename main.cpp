@@ -2,8 +2,85 @@
 
 #include <QCoreApplication>
 #include <QDebug>
+#include <QDir>
+#include <QFileInfo>
+#include <QStringList>
 #include "conversions.h"
 #include "xlsxmerger.h"
+
+
+/* TEST MAIN 3: CSV files --> XLSX files */
+
+// FUNCTION DECLARATIONS:
+QStringList getFilesOfType(const QString &folderPath, const QString &extension);
+QStringList getFullFilePathsOfType(const QString &folderPath, const QString &extension);
+
+
+int main()
+{
+    XlsxMerger merger;
+
+    QString inputFolder = "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/myCSVstuff";
+    QString outputFolder = "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/myXLSXstuff";
+
+    // STEP 1: turn csv files into excel files
+    merger.convertCsvListToXlsx(inputFolder, outputFolder); // puts all of the excel files into an output folder
+    // STEP 2: find the list of filepath names in the output folder
+    QStringList xlsxFiles = getFullFilePathsOfType(outputFolder, "xlsx");
+
+    // STEP 3: create a single excel output from the input excels
+   QString outputFile = "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/finaloutput.xlsx";
+
+    if (!merger.mergeFiles(xlsxFiles, outputFile)) {
+        qWarning() << "Failed to merge XLSX files.";
+    }
+
+
+    return 0;
+}
+
+
+
+// SOME FUNCITONS
+
+QStringList getFilesOfType(const QString &folderPath, const QString &extension)
+{
+    QDir dir(folderPath);
+    if (!dir.exists()) {
+        qWarning() << "Directory does not exist:" << folderPath;
+        return {};
+    }
+
+    QStringList filters;
+    filters << "*." + extension;  // e.g., "*.csv"
+
+    return dir.entryList(filters, QDir::Files);
+}
+
+QStringList getFullFilePathsOfType(const QString &folderPath, const QString &extension)
+{
+    QDir dir(folderPath);
+    if (!dir.exists()) {
+        qWarning() << "Directory does not exist:" << folderPath;
+        return {};
+    }
+
+    QStringList filters;
+    filters << "*." + extension;
+
+    QFileInfoList fileInfoList = dir.entryInfoList(filters, QDir::Files);
+    QStringList fullPaths;
+    for (const QFileInfo &info : fileInfoList) {
+        fullPaths << info.absoluteFilePath();
+    }
+    return fullPaths;
+}
+
+
+
+/* TEST MAIN 2: XLSX COMBINER */
+
+/*
 
 int main()
 {
@@ -21,7 +98,7 @@ int main()
     return 0;
 }
 
-
+*/
 
 /* TEST MAIN 1 */
 
