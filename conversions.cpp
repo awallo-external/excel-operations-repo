@@ -46,6 +46,115 @@ using namespace QXlsx;
 conversions::conversions()
 {
 }
+bool conversions::CSV_directTransfer_XLSX_largeSafe(const QStringList &csvPaths, const QString &outputPath)
+{
+    if (csvPaths.isEmpty()) {
+        qWarning() << "No CSV files provided.";
+        return false;
+    }
+
+    QXlsx::Document finalDoc;
+    const bool applyHeaderStyle = true;
+    const bool autoResizeColumns = false;
+
+    for (const QString &csvPath : csvPaths)
+    {
+        QFile file(csvPath);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qWarning() << "Failed to open CSV file:" << csvPath;
+            return false;
+        }
+
+        QTextStream in(&file);
+        QString sheetName = QFileInfo(csvPath).baseName();
+        finalDoc.addSheet(sheetName);
+        Worksheet *sheet = dynamic_cast<Worksheet*>(finalDoc.sheet(sheetName));
+
+        if (!sheet) {
+            qWarning() << "Failed to create/access sheet:" << sheetName;
+            return false;
+        }
+
+        int row = 1;
+        QVector<int> maxLengths;
+
+        while (!in.atEnd()) {
+            QString line = in.readLine().trimmed();
+
+            // Skip empty lines
+            if (line.isEmpty())
+                continue;
+
+            QStringList values = line.split(',');
+
+            // Skip lines with only empty cells
+            bool allEmpty = std::all_of(values.begin(), values.end(), [](const QString &v) {
+                return v.trimmed().isEmpty();
+            });
+            if (allEmpty)
+                continue;
+
+            // Update column count tracking
+            if (values.size() > maxLengths.size())
+                maxLengths.resize(values.size());
+
+            for (int col = 0; col < values.size(); ++col) {
+                const QString &cellText = values.at(col);
+                sheet->write(row, col + 1, cellText);
+
+                // Track max string length for optional resizing
+                if (row == 1 || autoResizeColumns) {
+                    int len = cellText.length();
+                    if (len > maxLengths[col])
+                        maxLengths[col] = len;
+                }
+            }
+
+            ++row;
+        }
+
+        if (row == 1) {
+            qWarning() << "Sheet" << sheetName << "was empty or only contained blank lines.";
+            continue;
+        }
+
+        int lastCol = maxLengths.size();
+
+        // 1. Freeze top row
+        sheet->setFreezeTopRow(true);
+
+        // 2. Add filter
+        sheet->setAutoFilter(QXlsx::CellRange(1, 1, 1, lastCol));
+
+        // 3. Header formatting (optional)
+        if (applyHeaderStyle) {
+            Format headerFormat;
+            headerFormat.setPatternBackgroundColor(QColor("#D3D3D3"));
+            headerFormat.setFontBold(true);
+
+            for (int col = 0; col < lastCol; ++col) {
+                QVariant val = sheet->read(1, col + 1);
+                sheet->write(1, col + 1, val, headerFormat);
+            }
+        }
+
+        // 4. Adjust width per column (optional)
+        if (autoResizeColumns) {
+            constexpr double minWidth = 8.43;
+            for (int col = 0; col < lastCol; ++col) {
+                double width = qMax(maxLengths[col] * 1.05 + 0.4, minWidth);
+                sheet->setColumnWidth(QXlsx::CellRange(1, col + 1, row - 1, col + 1), width);
+            }
+        }
+    }
+
+    if (!finalDoc.saveAs(outputPath)) {
+        qWarning() << "Failed to save XLSX to:" << outputPath;
+        return false;
+    }
+
+    return true;
+}
 
 bool conversions::CSV_directTransfer_XLSX_polished(const QStringList &csvPaths, const QString &outputPath)
 {

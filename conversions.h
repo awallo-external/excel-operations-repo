@@ -8,6 +8,8 @@ class conversions {
 public:
     conversions();
 
+    // LARGE CSV FILE HANDLER:
+    bool CSV_directTransfer_XLSX_largeSafe(const QStringList &csvPaths, const QString &outputPath);
 
     // basic conversion tool for CSV --> XLSX(excel file)
     bool CSV_2_XLSX(const QString &csvPaths, const QString &xlsxPath);
