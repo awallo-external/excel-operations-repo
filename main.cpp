@@ -19,16 +19,12 @@ QStringList getFullFilePathsOfType(const QString &folderPath, const QString &ext
 void complete_actions(); // build-out for TEST 3
 // ------------------------------------------------------------------------------
 
-
-
 /* TEST MAIN 3: CSV files --> XLSX files */
 int main()
 {
     complete_actions();
     return 0;
 }
-
-
 
 // ------------------------------------------------------------------------------
 // SOME FUNCITONS (Alternative tests are stored below functions)
@@ -129,6 +125,5 @@ int main(int argc, char *argv[])
 // NEXT GEN development: Individual Column Adjustment selection based on an array/vector of boolean inputs
 
 // Consider selection options for user on dextor side for each function -> rewrite functions for more toggle abilities
-
 
 
