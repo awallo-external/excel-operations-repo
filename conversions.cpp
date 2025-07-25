@@ -11,18 +11,6 @@ conversions conv; // (step 2)
 
 conv.CSV_2_XLSX(csvPath, xlsxPath); // (step 3)
 
-A note for the not-quite late Mr. Jim:
-
-Using other people's code is ok...
-... maybe just pretend that QXlsx is part of Qt,
-and also pretend that I didn't change anything in QXlsx to allow for
-my fuctions to work? Maybe?
-
-The ever hopeful,
-
-
-Andrew Wallo V
-
 */
 
 #include "conversions.h"
@@ -57,6 +45,10 @@ bool conversions::CSV_directTransfer_XLSX_largeSafe(const QStringList &csvPaths,
     const bool applyHeaderStyle = true;
     const bool autoResizeColumns = false;
 
+    // Prepare a reusable number format (up to 8 decimal places)
+    QXlsx::Format numberFormat;
+    numberFormat.setNumberFormat("0.########");
+
     for (const QString &csvPath : csvPaths)
     {
         QFile file(csvPath);
@@ -69,7 +61,6 @@ bool conversions::CSV_directTransfer_XLSX_largeSafe(const QStringList &csvPaths,
         QString sheetName = QFileInfo(csvPath).baseName();
         finalDoc.addSheet(sheetName);
         Worksheet *sheet = dynamic_cast<Worksheet*>(finalDoc.sheet(sheetName));
-
         if (!sheet) {
             qWarning() << "Failed to create/access sheet:" << sheetName;
             return false;
@@ -80,27 +71,34 @@ bool conversions::CSV_directTransfer_XLSX_largeSafe(const QStringList &csvPaths,
 
         while (!in.atEnd()) {
             QString line = in.readLine().trimmed();
-
-            // Skip empty lines
             if (line.isEmpty())
                 continue;
 
             QStringList values = line.split(',');
 
-            // Skip lines with only empty cells
-            bool allEmpty = std::all_of(values.begin(), values.end(), [](const QString &v) {
-                return v.trimmed().isEmpty();
-            });
+            bool allEmpty = std::all_of(values.begin(), values.end(),
+                                        [](const QString &v){ return v.trimmed().isEmpty(); });
             if (allEmpty)
                 continue;
 
-            // Update column count tracking
             if (values.size() > maxLengths.size())
                 maxLengths.resize(values.size());
 
             for (int col = 0; col < values.size(); ++col) {
-                const QString &cellText = values.at(col);
-                sheet->write(row, col + 1, cellText);
+                const QString &cellText = values.at(col).trimmed();
+
+                if (row == 1) {
+                    // Header row: always text
+                    sheet->write(row, col + 1, cellText);
+                } else {
+                    bool ok = false;
+                    double numVal = cellText.toDouble(&ok);
+                    if (ok) {
+                        sheet->write(row, col + 1, numVal, numberFormat);
+                    } else {
+                        sheet->write(row, col + 1, cellText);
+                    }
+                }
 
                 // Track max string length for optional resizing
                 if (row == 1 || autoResizeColumns) {
@@ -128,22 +126,21 @@ bool conversions::CSV_directTransfer_XLSX_largeSafe(const QStringList &csvPaths,
 
         // 3. Header formatting (optional)
         if (applyHeaderStyle) {
-            Format headerFormat;
-            headerFormat.setPatternBackgroundColor(QColor("#D3D3D3"));
-            headerFormat.setFontBold(true);
-
-            for (int col = 0; col < lastCol; ++col) {
-                QVariant val = sheet->read(1, col + 1);
-                sheet->write(1, col + 1, val, headerFormat);
+            QXlsx::Format headerFmt;
+            headerFmt.setPatternBackgroundColor(QColor("#D3D3D3"));
+            headerFmt.setFontBold(true);
+            for (int c = 0; c < lastCol; ++c) {
+                QVariant v = sheet->read(1, c + 1);
+                sheet->write(1, c + 1, v, headerFmt);
             }
         }
 
         // 4. Adjust width per column (optional)
         if (autoResizeColumns) {
             constexpr double minWidth = 8.43;
-            for (int col = 0; col < lastCol; ++col) {
-                double width = qMax(maxLengths[col] * 1.05 + 0.4, minWidth);
-                sheet->setColumnWidth(QXlsx::CellRange(1, col + 1, row - 1, col + 1), width);
+            for (int c = 0; c < lastCol; ++c) {
+                double width = qMax(maxLengths[c] * 1.05 + 0.4, minWidth);
+                sheet->setColumnWidth(QXlsx::CellRange(1, c + 1, row - 1, c + 1), width);
             }
         }
     }
@@ -215,6 +212,7 @@ bool conversions::CSV_directTransfer_XLSX_polished(const QStringList &csvPaths, 
             QVariant val = sheet->read(1, col);
             sheet->write(1, col, val, headerFormat);
         }
+
 
         // 4. Adjust width per column
         constexpr double minWidth = 8.43;

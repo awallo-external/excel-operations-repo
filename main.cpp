@@ -60,13 +60,15 @@ void complete_actions(){
     QStringList inputFiles ={ "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/myCSVstuff/input1.csv",
                               "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/myCSVstuff/input2.csv",
                               "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/myCSVstuff/input3.csv",
+                              "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/myCSVstuff/day_test.csv"
                             };
 
 
     QString outputFile = "C:/Users/Andrew.Wallo1/Documents/misc/test_folders_csv2xlsx/final_output.xlsx";
 
    //  conv.CSV_directTransfer_XLSX_polished(inputFiles, outputFile);
-    conv.append_CSV_2_XLSX_sheets(inputFiles, outputFile);
+  //  conv.append_CSV_2_XLSX_sheets(inputFiles, outputFile);
+    conv.CSV_directTransfer_XLSX_largeSafe(inputFiles, outputFile);
 
 }
 
