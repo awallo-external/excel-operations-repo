@@ -15,6 +15,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        atk.cpp \
         conversions.cpp \
         main.cpp \
         xlsxmerger.cpp
@@ -28,5 +29,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 include(QXlsx/QXlsx.pri)
 
 HEADERS += \
+    atk.h \
     conversions.h \
     xlsxmerger.h

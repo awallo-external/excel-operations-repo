@@ -1,0 +1,39 @@
+/* conversions.cpp
+
+  - HOW TO CALL FUNCTIONS
+
+1. include the conversions.h library
+2. create an instance of the conversions class
+3. call member functions of your instance:
+
+
+conversions conv; // (step 2)
+
+conv.CSV_2_XLSX(csvPath, xlsxPath); // (step 3)
+
+*/
+
+#include "conversions.h"
+#include "xlsxdocument.h"
+#include <QFile>
+#include <QTextStream>
+#include <QDebug>
+#include <QFileInfo>
+
+// Many functions call similar code
+//
+//
+// Values for width adjustments, data vs. header toggling,
+// and feature activating could be enumerated along with
+// function calls for all features that are changed to be
+// set/run
+// ------------------------------------------------------------
+
+using namespace QXlsx;
+
+conversions::conversions()
+{
+}
+
+
+
