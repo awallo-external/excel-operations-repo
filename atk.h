@@ -22,7 +22,7 @@ public:
 
     void addFilter(int lastCol);
     void freezeTopRow(bool active);
-    void style(int lastCol);
+    void style();
     int computeLastCol();
 
 private:

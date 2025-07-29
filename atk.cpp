@@ -24,13 +24,13 @@ void atk::freezeTopRow(bool active)
     m_sheet->setFreezeTopRow(active);
 }
 
-void atk::style(int lastCol)
+void atk::style()
 {
     Format headerFormat;
     headerFormat.setPatternBackgroundColor(QColor("#D3D3D3"));
     headerFormat.setFontBold(true);
 
-    for (int col = 1; col <= lastCol; ++col)
+    for (int col = 1; col <= m_lastCol; ++col)
     {
         QVariant val = m_sheet->read(1,col);
         m_sheet->write(1,col, val, headerFormat);
