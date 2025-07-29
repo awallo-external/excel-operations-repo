@@ -2,7 +2,7 @@
 #include <QStringList>
 #include <QDebug>
 
-#include "atk.h"  // Your toolkit header
+#include "atk.h"  // Andy ToolKit
 
 int main(int argc, char *argv[])
 {

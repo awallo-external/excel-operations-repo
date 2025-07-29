@@ -1,4 +1,6 @@
 // atk.h
+// Requires Qt and QXlsx for functionality
+
 #ifndef ATK_H
 #define ATK_H
 
@@ -24,6 +26,8 @@ public:
     void freezeTopRow(bool active);
     void style();
     int computeLastCol();
+    QMetaType::Type columnType(const QString &headerName, int maxRowsToCheck = 100) const;
+
 
 private:
     QXlsx::Worksheet *m_sheet;  // Store the sheet
