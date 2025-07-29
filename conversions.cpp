@@ -494,4 +494,140 @@ bool conversions::XLSX_fixWidth(const QString &xlsxPath, bool isDataWidth)
     return true;
 }
 
+/* THIS RELATES TO FASTER PROCESSING SPEED, Column related analysis, instead of row based.
+
+
+
+namespace conversions {
+
+// Represents whether each column is string‑typed or numeric
+using ColumnTypes = QVector<bool>;
+
+// 1. Infer column types by sampling the first N data rows
+ColumnTypes detectColumnTypes(QTextStream &in, int sampleRows = 10) {
+    QStringList header = in.readLine().split(',');
+    int cols = header.size();
+    ColumnTypes isString(cols, false);
+
+    // Skip header—headers are always strings
+    for (int c = 0; c < cols; ++c)
+        isString[c] = true;
+
+    // Sample next lines
+    for (int i = 0; i < sampleRows && !in.atEnd(); ++i) {
+        QStringList values = in.readLine().split(',');
+        for (int c = 0; c < values.size(); ++c) {
+            if (!isString[c]) continue;            // already numeric
+            bool ok;
+            values[c].trimmed().toDouble(&ok);
+            if (ok) {
+                // first numeric seen → this column is numeric
+                isString[c] = false;
+            }
+        }
+    }
+
+    // Rewind stream back to just before first data row
+    in.seek(0);
+    in.readLine(); // skip header again
+    return isString;
+}
+
+// 2. Write a single sheet from CSV
+bool writeSheet(const QString &csvPath, QXlsx::Document &doc,
+                const ColumnTypes &colTypes,
+                const QXlsx::Format &numberFmt,
+                bool applyHeaderStyle)
+{
+    QFile file(csvPath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "Cannot open" << csvPath;
+        return false;
+    }
+    QTextStream in(&file);
+
+    QString sheetName = QFileInfo(csvPath).baseName();
+    doc.addSheet(sheetName);
+    auto *sheet = dynamic_cast<QXlsx::Worksheet*>(doc.sheet(sheetName));
+
+    int row = 1;
+    // Header
+    QStringList headers = in.readLine().split(',');
+    for (int c = 0; c < headers.size(); ++c)
+        sheet->write(row, c+1, headers[c].trimmed());
+
+    // Data rows
+    while (!in.atEnd()) {
+        QStringList vals = in.readLine().split(',');
+        if (std::all_of(vals.begin(), vals.end(),
+            [](auto &s){ return s.trimmed().isEmpty(); }))
+            continue;
+
+        ++row;
+        for (int c = 0; c < vals.size(); ++c) {
+            QString txt = vals[c].trimmed();
+            if (colTypes[c]) {
+                sheet->write(row, c+1, txt);
+            } else {
+                bool ok;
+                double v = txt.toDouble(&ok);
+                if (ok) sheet->write(row, c+1, v, numberFmt);
+                else    sheet->write(row, c+1, txt);
+            }
+        }
+    }
+
+    // Formatting
+    sheet->setFreezeTopRow(true);
+    sheet->setAutoFilter(QXlsx::CellRange(1,1,1,headers.size()));
+    if (applyHeaderStyle) {
+        QXlsx::Format hdr;
+        hdr.setPatternBackgroundColor(QColor("#D3D3D3"));
+        hdr.setFontBold(true);
+        for (int c = 0; c < headers.size(); ++c) {
+            QVariant v = sheet->read(1, c+1);
+            sheet->write(1, c+1, v, hdr);
+        }
+    }
+
+    return true;
+}
+
+// 3. Main orchestrator
+bool CSV_directTransfer_XLSX_largeSafe(const QStringList &csvPaths,
+                                       const QString &outputPath)
+{
+    if (csvPaths.isEmpty()) {
+        qWarning() << "No CSV files.";
+        return false;
+    }
+
+    QXlsx::Document doc;
+    QXlsx::Format numberFmt; numberFmt.setNumberFormat("0.########");
+    const bool applyHdrStyle = true;
+
+    for (const auto &path : csvPaths) {
+        QFile f(path);
+        if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) continue;
+        QTextStream in(&f);
+
+        // 1. Detect types
+        ColumnTypes types = detectColumnTypes(in);
+
+        // 2. Write sheet
+        if (!writeSheet(path, doc, types, numberFmt, applyHdrStyle))
+            return false;
+    }
+
+    if (!doc.saveAs(outputPath)) {
+        qWarning() << "Save failed:" << outputPath;
+        return false;
+    }
+    return true;
+}
+
+} // namespace conversions
+
+ */
+
 
